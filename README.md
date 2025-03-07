@@ -1,6 +1,7 @@
 # leetcode
 
-    ```
+
+```
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, udf
 from pyspark.sql.types import StringType
@@ -49,4 +50,4 @@ with open(output_file, "w") as f:
         f.write("\n".join(paths) + "\n\n")
 
 print(f"Duplicate image list saved to: {output_file}")
-    ```
+```
