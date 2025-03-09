@@ -1,3 +1,31 @@
+```
+import os
+import shutil
+
+# Define source and destination paths
+source_dir = "/path/to/source_directory/subdirectory"  # Change to your subdirectory path
+destination_dir = "/path/to/destination_directory"  # Change to your destination directory
+
+# Ensure destination directory exists
+os.makedirs(destination_dir, exist_ok=True)
+
+# Copy all files from the source subdirectory to the destination directory
+for file_name in os.listdir(source_dir):
+    source_file = os.path.join(source_dir, file_name)
+    destination_file = os.path.join(destination_dir, file_name)
+    
+    if os.path.isfile(source_file):  # Ensure it's a file
+        shutil.copy2(source_file, destination_file)  # copy2 preserves metadata
+
+print("Files copied successfully!")
+
+
+
+```
+
+
+
+
 # leetcode
 
 
