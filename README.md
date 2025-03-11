@@ -1,4 +1,66 @@
 ```
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, udf
+from pyspark.sql.types import StringType
+from imagededup.methods import PHash
+import os
+import numpy as np
+
+# Initialize Spark session
+spark = SparkSession.builder.appName("ImageDeduplication").getOrCreate()
+
+# Path to your image directory
+image_dir = "/path/to/your/images"
+
+# Read images as binary files
+image_df = spark.read.format("binaryFile").load(image_dir)
+
+# Initialize PHash object
+phash = PHash()
+
+# Define UDF to compute perceptual hash
+def compute_phash(image_path):
+    try:
+        return phash.encode_image(image_path)
+    except Exception as e:
+        return None
+
+# Register UDF with Spark
+phash_udf = udf(compute_phash, StringType())
+
+# Compute phash for each image
+image_df = image_df.withColumn("phash", phash_udf(col("path")))
+
+# Convert Spark DataFrame to Pandas for comparison
+image_pd_df = image_df.select("path", "phash").toPandas()
+
+# Define max distance threshold (adjust as needed)
+max_distance_threshold = 10  # Adjust this value based on similarity criteria
+
+# Function to calculate Hamming distance between two hashes
+def hamming_distance(hash1, hash2):
+    return np.sum(np.array(list(format(int(hash1, 16), '064b'))) != np.array(list(format(int(hash2, 16), '064b'))))
+
+# Find similar images
+similar_images = []
+for i, (path1, hash1) in enumerate(image_pd_df.itertuples(index=False)):
+    for j, (path2, hash2) in enumerate(image_pd_df.itertuples(index=False)):
+        if i < j and hash1 and hash2:  # Avoid duplicate comparisons
+            distance = hamming_distance(hash1, hash2)
+            if distance <= max_distance_threshold:
+                similar_images.append((path1, path2, distance))
+
+# Save similar image results to a file
+output_file = "/path/to/output/similar_images.txt"
+with open(output_file, "w") as f:
+    for img1, img2, dist in similar_images:
+        f.write(f"Similar: {img1} <--> {img2} (Distance: {dist})\n")
+
+print(f"Similar image list saved to: {output_file}")
+
+```
+
+```
 import os
 import shutil
 
